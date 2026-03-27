@@ -2,12 +2,38 @@
 # Enhanced Claude Code statusline with advanced features
 # Enhanced: 2025-01-27 with git status, session tracking, language detection, and more
 # Features: directory, enhanced-git, model, color-context, usage, session-duration, language-detection, project-name, weekly-usage
-STATUSLINE_VERSION="2.1.0"
+STATUSLINE_VERSION="3.0.0"
+STATUSLINE_REPO="bulgariamitko/claude-code-statusline"
+STATUSLINE_RAW_URL="https://raw.githubusercontent.com/${STATUSLINE_REPO}/main/statusline.sh"
 
 # Cache directory for performance
 CACHE_DIR="$HOME/.claude/.statusline_cache"
 mkdir -p "$CACHE_DIR"
 CACHE_TTL=30  # seconds for general cache
+
+# ---- auto-update check (runs in background, once per day) ----
+check_for_update() {
+  local update_cache="$CACHE_DIR/update_check"
+  local update_ttl=86400  # 24 hours
+
+  # Skip if checked recently
+  if [ -f "$update_cache" ] && [ $(($(date +%s) - $(stat -f%m "$update_cache" 2>/dev/null || stat -c%Y "$update_cache" 2>/dev/null || echo 0))) -lt $update_ttl ]; then
+    return
+  fi
+
+  # Run update check in background to not block the statusline
+  (
+    remote_version=$(curl -sf --max-time 5 "$STATUSLINE_RAW_URL" 2>/dev/null | grep '^STATUSLINE_VERSION=' | head -1 | sed 's/STATUSLINE_VERSION="\(.*\)"/\1/')
+    if [ -n "$remote_version" ] && [ "$remote_version" != "$STATUSLINE_VERSION" ]; then
+      echo "$remote_version" > "$CACHE_DIR/update_available"
+    else
+      rm -f "$CACHE_DIR/update_available"
+    fi
+    date +%s > "$update_cache"
+  ) &>/dev/null &
+}
+
+check_for_update
 
 input=$(cat)
 
@@ -650,6 +676,18 @@ printf '  🤖 %s%s%s' "$(model_color)" "$model_name" "$(rst)"
 
 if [ -n "$cc_version" ] && [ "$cc_version" != "null" ]; then
   printf '  📟 %sv%s%s' "$(cc_version_color)" "$cc_version" "$(rst)"
+fi
+
+# Statusline version + update notification
+update_avail=""
+if [ -f "$CACHE_DIR/update_available" ]; then
+  update_avail=$(cat "$CACHE_DIR/update_available")
+fi
+if [ -n "$update_avail" ]; then
+  update_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;208m'; fi; }  # orange
+  printf '  %s⬆ SL v%s → v%s%s' "$(update_color)" "$STATUSLINE_VERSION" "$update_avail" "$(rst)"
+else
+  printf '  %sSL v%s%s' "$(style_color)" "$STATUSLINE_VERSION" "$(rst)"
 fi
 
 # Usage display (session + weekly with separate reset times)

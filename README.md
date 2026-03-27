@@ -17,12 +17,23 @@ A feature-rich status line for [Claude Code](https://docs.anthropic.com/en/docs/
 - **Context window tracking** - Monitors token usage vs context limit
 - **Cost tracking** - Session cost and burn rate ($/hour)
 - **Task counter** - Shows active task count
+- **Auto-update notifications** - Checks for new versions daily and shows upgrade prompt
 - **Performance optimized** - Caching to keep the status line fast
 - **No dependencies required** - Works with pure bash; optionally uses `jq` for better JSON parsing
 
 ## Installation
 
-### 1. Copy the script
+### Quick install (recommended)
+
+```bash
+curl -sf https://raw.githubusercontent.com/bulgariamitko/claude-code-statusline/main/install.sh | bash
+```
+
+This downloads the script, configures `settings.json`, and you're ready to go.
+
+### Manual install
+
+#### 1. Copy the script
 
 ```bash
 mkdir -p ~/.claude
@@ -30,7 +41,7 @@ curl -o ~/.claude/statusline.sh https://raw.githubusercontent.com/bulgariamitko/
 chmod +x ~/.claude/statusline.sh
 ```
 
-### 2. Configure Claude Code
+#### 2. Configure Claude Code
 
 Add this to your `~/.claude/settings.json`:
 
@@ -46,15 +57,43 @@ Add this to your `~/.claude/settings.json`:
 
 If you already have a `settings.json`, just add the `statusLine` key to it.
 
-### 3. Restart Claude Code
+#### 3. Restart Claude Code
 
 The status line will appear automatically on your next session.
+
+## Updating
+
+### Quick update
+
+Run the same install command - it will update to the latest version:
+
+```bash
+curl -sf https://raw.githubusercontent.com/bulgariamitko/claude-code-statusline/main/install.sh | bash
+```
+
+### Auto-update notifications
+
+The status line checks for new versions once per day (in the background, won't slow you down). When an update is available, you'll see:
+
+```
+⬆ SL v3.0.0 → v3.1.0
+```
+
+Run the install command above to update.
+
+### Version display
+
+The current version is always shown in the status line:
+
+```
+SL v3.0.0
+```
 
 ## What it shows
 
 ### Line 1 - Core info
 ```
-📁 project-name  🐚 bash  🤖 Claude Opus 4.6 (1M context)  📟 v2.1.84
+📁 project-name  🐚 bash  🤖 Claude Opus 4.6 (1M context)  📟 v2.1.84  SL v3.0.0
 ```
 
 ### Line 2 - Rate limits (appears after first API response)
@@ -111,7 +150,7 @@ The script is a single bash file - feel free to modify colors, layout, or add/re
 - **Colors**: Lines 28-37 define the color palette using ANSI 256-color codes
 - **Progress bar**: `progress_bar()` function controls the bar width and characters
 - **Cache TTL**: `CACHE_TTL=30` controls how often git/language detection refreshes (seconds)
-- **Sections**: Comment out any `printf` block in the render section (lines 598+) to hide it
+- **Sections**: Comment out any `printf` block in the render section to hide it
 
 ## Requirements
 
