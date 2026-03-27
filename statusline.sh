@@ -581,6 +581,49 @@ if command -v ccusage >/dev/null 2>&1 && [ "$HAS_JQ" -eq 1 ]; then
   fi
 fi
 
+# ---- per-message token usage (from context_window.current_usage) ----
+token_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;116m'; fi; }  # teal
+token_dim_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;245m'; fi; }  # gray
+
+format_tokens() {
+  local n="$1"
+  if [ "$n" -ge 1000000 ]; then
+    printf '%.1fM' "$(echo "$n" | awk '{printf "%.1f", $1/1000000}')"
+  elif [ "$n" -ge 1000 ]; then
+    printf '%.1fk' "$(echo "$n" | awk '{printf "%.1f", $1/1000}')"
+  else
+    printf '%d' "$n"
+  fi
+}
+
+get_last_input_tokens() {
+  if [ "$HAS_JQ" -eq 1 ]; then
+    echo "$input" | jq -r '.context_window.current_usage.input_tokens // empty' 2>/dev/null
+  else
+    echo "$input" | grep -o '"input_tokens"[[:space:]]*:[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$'
+  fi
+}
+
+get_last_output_tokens() {
+  if [ "$HAS_JQ" -eq 1 ]; then
+    echo "$input" | jq -r '.context_window.current_usage.output_tokens // empty' 2>/dev/null
+  else
+    echo "$input" | grep -o '"output_tokens"[[:space:]]*:[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$'
+  fi
+}
+
+get_cache_read_tokens() {
+  if [ "$HAS_JQ" -eq 1 ]; then
+    echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // empty' 2>/dev/null
+  fi
+}
+
+get_cache_creation_tokens() {
+  if [ "$HAS_JQ" -eq 1 ]; then
+    echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // empty' 2>/dev/null
+  fi
+}
+
 # ---- detect shell type ----
 get_shell_type() {
   if [ -n "$BASH_VERSION" ]; then
@@ -661,11 +704,31 @@ elif [ -n "$weekly_usage" ] && [[ "$weekly_usage" =~ ^[0-9]+$ ]]; then
   printf '\n📈 %sWeekly: %d%% [%s]%s%s' "$(usage_color_for "$weekly_usage")" "$weekly_usage" "$weekly_bar" "$(rst)" "$weekly_reset_txt"
 fi
 
+# Per-message token usage
+last_in=$(get_last_input_tokens)
+last_out=$(get_last_output_tokens)
+cache_read=$(get_cache_read_tokens)
+cache_create=$(get_cache_creation_tokens)
+
+if [ -n "$last_in" ] && [[ "$last_in" =~ ^[0-9]+$ ]] && [ -n "$last_out" ] && [[ "$last_out" =~ ^[0-9]+$ ]]; then
+  total_msg=$((last_in + last_out))
+  printf '\n%s📨 Last msg: %s in / %s out (%s total)%s' \
+    "$(token_color)" "$(format_tokens "$last_in")" "$(format_tokens "$last_out")" "$(format_tokens "$total_msg")" "$(rst)"
+  # Show cache info if available
+  if [ -n "$cache_read" ] && [[ "$cache_read" =~ ^[0-9]+$ ]] && [ "$cache_read" -gt 0 ]; then
+    printf ' %s[cache: %s read%s' "$(token_dim_color)" "$(format_tokens "$cache_read")" "$(rst)"
+    if [ -n "$cache_create" ] && [[ "$cache_create" =~ ^[0-9]+$ ]] && [ "$cache_create" -gt 0 ]; then
+      printf '%s, %s write%s' "$(token_dim_color)" "$(format_tokens "$cache_create")" "$(rst)"
+    fi
+    printf '%s]%s' "$(token_dim_color)" "$(rst)"
+  fi
+fi
+
 # Line 2: Git info, language, session duration, todos
 line2=""
 
 if [ -n "$primary_language" ]; then
-  line2="%s%s%s" "$(lang_color)" "$primary_language" "$(rst)"
+  line2="$(lang_color)${primary_language}$(rst)"
 fi
 
 # Enhanced git info

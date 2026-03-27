@@ -6,6 +6,7 @@ A feature-rich status line for [Claude Code](https://docs.anthropic.com/en/docs/
 
 ## Features
 
+- **Per-message token tracking** - Input/output tokens for the last message, with cache read/write breakdown
 - **Real-time rate limit tracking** - Session (5h) and weekly (7d) usage percentages with progress bars and countdown timers
 - **Color-coded usage warnings** - Green/yellow/red based on usage level
 - **Git integration** - Branch name, clean/dirty status, ahead/behind counts
@@ -61,7 +62,12 @@ The status line will appear automatically on your next session.
 ⚡ Session: 42% [===---]  ⏱2h 1m   📈 Weekly: 70% [=====-] ⏱38h 1m
 ```
 
-### Line 3 - Git, language, session duration
+### Line 3 - Per-message token usage
+```
+📨 Last msg: 8.5k in / 1.2k out (9.8k total) [cache: 52.0k read, 3.2k write]
+```
+
+### Line 4 - Git, language, session duration
 ```
 🐍 Python  🌿 main ✅  ⏱️ 1h 23m
 ```
