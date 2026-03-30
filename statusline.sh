@@ -776,24 +776,19 @@ sess_out=$(get_total_output_tokens)
 
 if [ -n "$last_in" ] && [[ "$last_in" =~ ^[0-9]+$ ]] && [ -n "$last_out" ] && [[ "$last_out" =~ ^[0-9]+$ ]]; then
   total_msg=$((last_in + last_out))
-  printf '\n%s📨 Last msg: %s in / %s out (%s total)%s' \
-    "$(token_color)" "$(format_tokens "$last_in")" "$(format_tokens "$last_out")" "$(format_tokens "$total_msg")" "$(rst)"
-  # Show cache info if available
+  printf '\n%s📨 Last: %s total%s' \
+    "$(token_color)" "$(format_tokens "$total_msg")" "$(rst)"
+  # Show cache read
   if [ -n "$cache_read" ] && [[ "$cache_read" =~ ^[0-9]+$ ]] && [ "$cache_read" -gt 0 ]; then
-    printf ' %s[cache: %s read%s' "$(token_dim_color)" "$(format_tokens "$cache_read")" "$(rst)"
-    if [ -n "$cache_create" ] && [[ "$cache_create" =~ ^[0-9]+$ ]] && [ "$cache_create" -gt 0 ]; then
-      printf '%s, %s write%s' "$(token_dim_color)" "$(format_tokens "$cache_create")" "$(rst)"
-    fi
-    printf '%s]%s' "$(token_dim_color)" "$(rst)"
+    printf ' %s[cached: %s]%s' "$(token_dim_color)" "$(format_tokens "$cache_read")" "$(rst)"
   fi
-fi
-
-# Session total tokens
-if [ -n "$sess_in" ] && [[ "$sess_in" =~ ^[0-9]+$ ]] && [ -n "$sess_out" ] && [[ "$sess_out" =~ ^[0-9]+$ ]]; then
-  sess_total=$((sess_in + sess_out))
-  session_tok_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;183m'; fi; }  # light purple
-  printf '  %s📊 Session: %s in / %s out (%s total)%s' \
-    "$(session_tok_color)" "$(format_tokens "$sess_in")" "$(format_tokens "$sess_out")" "$(format_tokens "$sess_total")" "$(rst)"
+  # Session total
+  if [ -n "$sess_in" ] && [[ "$sess_in" =~ ^[0-9]+$ ]] && [ -n "$sess_out" ] && [[ "$sess_out" =~ ^[0-9]+$ ]]; then
+    sess_total=$((sess_in + sess_out))
+    session_tok_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;183m'; fi; }
+    printf '  %s📊 Session: %s%s' \
+      "$(session_tok_color)" "$(format_tokens "$sess_total")" "$(rst)"
+  fi
 fi
 
 # Line 2: Git info, language, session duration, todos
