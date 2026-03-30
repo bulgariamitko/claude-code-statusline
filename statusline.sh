@@ -2,7 +2,7 @@
 # Enhanced Claude Code statusline with advanced features
 # Enhanced: 2025-01-27 with git status, session tracking, language detection, and more
 # Features: directory, enhanced-git, model, color-context, usage, session-duration, language-detection, project-name, weekly-usage
-STATUSLINE_VERSION="3.0.0"
+STATUSLINE_VERSION="3.1.0"
 STATUSLINE_REPO="bulgariamitko/claude-code-statusline"
 STATUSLINE_RAW_URL="https://raw.githubusercontent.com/${STATUSLINE_REPO}/main/statusline.sh"
 
@@ -783,9 +783,9 @@ if [ -n "$sess_in" ] && [[ "$sess_in" =~ ^[0-9]+$ ]] && [ -n "$sess_out" ] && [[
   sess_total=$((sess_in + sess_out))
   session_tok_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;183m'; fi; }
   if [ -n "$token_line" ]; then
-    token_line="${token_line}  $(session_tok_color)📊 Session: $(format_tokens "$sess_total")$(rst)"
+    token_line="${token_line}  $(session_tok_color)📊 Total: $(format_tokens "$sess_total")$(rst)"
   else
-    token_line="\n$(session_tok_color)📊 Session: $(format_tokens "$sess_total")$(rst)"
+    token_line="\n$(session_tok_color)📊 Total: $(format_tokens "$sess_total")$(rst)"
   fi
 fi
 if [ -n "$token_line" ]; then
