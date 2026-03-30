@@ -123,9 +123,14 @@ get_session_reset_time() {
     local now=$(date +%s)
     local remaining=$((reset_epoch - now))
     if [ "$remaining" -gt 0 ]; then
-      local hours=$((remaining / 3600))
+      local days=$((remaining / 86400))
+      local hours=$(((remaining % 86400) / 3600))
       local mins=$(((remaining % 3600) / 60))
-      echo "${hours}h ${mins}m"
+      if [ "$days" -gt 0 ]; then
+        echo "${days}d ${hours}h ${mins}m"
+      else
+        echo "${hours}h ${mins}m"
+      fi
     else
       echo "expired"
     fi
@@ -143,9 +148,14 @@ get_weekly_reset_time() {
     local now=$(date +%s)
     local remaining=$((reset_epoch - now))
     if [ "$remaining" -gt 0 ]; then
-      local hours=$((remaining / 3600))
+      local days=$((remaining / 86400))
+      local hours=$(((remaining % 86400) / 3600))
       local mins=$(((remaining % 3600) / 60))
-      echo "${hours}h ${mins}m"
+      if [ "$days" -gt 0 ]; then
+        echo "${days}d ${hours}h ${mins}m"
+      else
+        echo "${hours}h ${mins}m"
+      fi
     else
       echo "expired"
     fi
@@ -670,8 +680,6 @@ shell_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;159m'; fi; }  
 current_dir_name=$(basename "$(echo "$current_dir" | sed "s|~|$HOME|g")")
 printf '📁 %s%s%s' "$(dir_color)" "$current_dir_name" "$(rst)"
 
-printf '  🐚 %s%s%s' "$(shell_color)" "$shell_type" "$(rst)"
-
 printf '  🤖 %s%s%s' "$(model_color)" "$model_name" "$(rst)"
 
 if [ -n "$cc_version" ] && [ "$cc_version" != "null" ]; then
@@ -764,10 +772,6 @@ fi
 
 # Line 2: Git info, language, session duration, todos
 line2=""
-
-if [ -n "$primary_language" ]; then
-  line2="$(lang_color)${primary_language}$(rst)"
-fi
 
 # Enhanced git info
 if [ -n "$git_branch" ]; then
