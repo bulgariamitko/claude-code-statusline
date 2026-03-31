@@ -2,7 +2,7 @@
 # Enhanced Claude Code statusline with advanced features
 # Enhanced: 2025-01-27 with git status, session tracking, language detection, and more
 # Features: directory, enhanced-git, model, color-context, usage, session-duration, language-detection, project-name, weekly-usage
-STATUSLINE_VERSION="3.1.0"
+STATUSLINE_VERSION="3.2.0"
 STATUSLINE_REPO="bulgariamitko/claude-code-statusline"
 STATUSLINE_RAW_URL="https://raw.githubusercontent.com/${STATUSLINE_REPO}/main/statusline.sh"
 
@@ -774,89 +774,44 @@ cache_create=$(get_cache_creation_tokens)
 sess_in=$(get_total_input_tokens)
 sess_out=$(get_total_output_tokens)
 
-# Show cached tokens and session total
-token_line=""
+# Line 3: Cached, total tokens, git, session duration
+line3=""
+
 if [ -n "$cache_read" ] && [[ "$cache_read" =~ ^[0-9]+$ ]] && [ "$cache_read" -gt 0 ]; then
-  token_line="\n$(token_dim_color)📦 Cached: $(format_tokens "$cache_read")$(rst)"
+  line3="$(token_dim_color)📦 Cached: $(format_tokens "$cache_read")$(rst)"
 fi
+
 if [ -n "$sess_in" ] && [[ "$sess_in" =~ ^[0-9]+$ ]] && [ -n "$sess_out" ] && [[ "$sess_out" =~ ^[0-9]+$ ]]; then
   sess_total=$((sess_in + sess_out))
   session_tok_color() { if [ "$use_color" -eq 1 ]; then printf '\033[38;5;183m'; fi; }
-  if [ -n "$token_line" ]; then
-    token_line="${token_line}  $(session_tok_color)📊 Total: $(format_tokens "$sess_total")$(rst)"
-  else
-    token_line="\n$(session_tok_color)📊 Total: $(format_tokens "$sess_total")$(rst)"
-  fi
-fi
-if [ -n "$token_line" ]; then
-  printf "$token_line"
+  [ -n "$line3" ] && line3="$line3  "
+  line3="${line3}$(session_tok_color)📊 Total: $(format_tokens "$sess_total")$(rst)"
 fi
 
-# Line 2: Git info, language, session duration, todos
-line2=""
-
-# Enhanced git info
+# Git info
 if [ -n "$git_branch" ]; then
-  if [ -n "$line2" ]; then
-    line2="$line2  "
-  fi
-  line2="${line2}🌿 $(git_color)${git_branch}$(rst)"
-
-  # Git status indicator
+  [ -n "$line3" ] && line3="$line3  "
+  line3="${line3}🌿 $(git_color)${git_branch}$(rst)"
   if [ "$git_status" = "clean" ]; then
-    line2="$line2 $(git_clean_color)✅$(rst)"
+    line3="$line3 $(git_clean_color)✅$(rst)"
   elif [ "$git_status" = "dirty" ]; then
-    line2="$line2 $(git_dirty_color)❌$(rst)"
+    line3="$line3 $(git_dirty_color)❌$(rst)"
   fi
-
-  # Git ahead/behind indicators
   if [ "$git_ahead" -gt 0 ]; then
-    line2="$line2 $(git_ahead_color)↑$git_ahead$(rst)"
+    line3="$line3 $(git_ahead_color)↑$git_ahead$(rst)"
   fi
   if [ "$git_behind" -gt 0 ]; then
-    line2="$line2 $(git_behind_color)↓$git_behind$(rst)"
+    line3="$line3 $(git_behind_color)↓$git_behind$(rst)"
   fi
 fi
 
 # Session duration
 if [ -n "$session_duration" ]; then
-  if [ -n "$line2" ]; then
-    line2="$line2  "
-  fi
-  line2="${line2}⏱️ $(session_dur_color)${session_duration}$(rst)"
+  [ -n "$line3" ] && line3="$line3  "
+  line3="${line3}⏱️ $(session_dur_color)${session_duration}$(rst)"
 fi
 
-# Todo count
-if [ -n "$todo_count" ]; then
-  if [ -n "$line2" ]; then
-    line2="$line2  "
-  fi
-  line2="${line2}📝 $(todo_color)${todo_count} tasks$(rst)"
-fi
-
-# Session usage limits
-if [ -n "$session_txt" ]; then
-  if [ -n "$line2" ]; then
-    line2="$line2  "
-  fi
-  line2="${line2}⌛ $(session_color)${session_txt}$(rst) $(session_color)[${session_bar}]$(rst)"
-fi
-
-# Line 3: Usage analytics
-line3=""
-if [ -n "$tot_tokens" ] && [[ "$tot_tokens" =~ ^[0-9]+$ ]]; then
-  if [ -n "$tpm" ] && [[ "$tpm" =~ ^[0-9.]+$ ]]; then
-    tpm_formatted=$(printf '%.0f' "$tpm")
-    line3="📊 $(usage_color)${tot_tokens} tok (${tpm_formatted} tpm)$(rst)"
-  else
-    line3="📊 $(usage_color)${tot_tokens} tok$(rst)"
-  fi
-fi
-
-# Print all lines
-if [ -n "$line2" ]; then
-  printf '\n%s' "$line2"
-fi
+# Print line 3
 if [ -n "$line3" ]; then
   printf '\n%s' "$line3"
 fi
