@@ -1,0 +1,2 @@
+# Keep LF endings so the scripts run in Git Bash on Windows (autocrlf would break them)
+*.sh text eol=lf

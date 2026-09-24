@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Install or update Claude Code Status Line
 # Usage: curl -sf https://raw.githubusercontent.com/bulgariamitko/claude-code-statusline/main/install.sh | bash
 
@@ -23,6 +23,7 @@ fi
 echo -e "${Y}Downloading latest statusline.sh...${R}"
 mkdir -p "$HOME/.claude"
 curl -sf "$REPO_RAW/statusline.sh" -o "$DEST.tmp"
+tr -d '\r' < "$DEST.tmp" > "$DEST.tmp2" && mv "$DEST.tmp2" "$DEST.tmp"  # guard against CRLF on Windows
 
 new_version=$(grep '^STATUSLINE_VERSION=' "$DEST.tmp" 2>/dev/null | sed 's/STATUSLINE_VERSION="\(.*\)"/\1/')
 mv "$DEST.tmp" "$DEST"
@@ -34,7 +35,12 @@ echo -e "${G}Installed v${new_version}${R} → ${DEST}"
 if [ -f "$SETTINGS" ]; then
   if grep -q '"statusLine"' "$SETTINGS" 2>/dev/null; then
     echo -e "${D}settings.json already configured${R}"
+  elif command -v jq >/dev/null 2>&1 && \
+       jq '. + {statusLine: {type: "command", command: "~/.claude/statusline.sh", padding: 0}}' "$SETTINGS" > "$SETTINGS.tmp" 2>/dev/null; then
+    mv "$SETTINGS.tmp" "$SETTINGS"
+    echo -e "${G}Added statusLine to${R} ${SETTINGS}"
   else
+    rm -f "$SETTINGS.tmp"
     echo -e "${Y}Note:${R} Add this to your ${SETTINGS}:"
     echo -e '  "statusLine": { "type": "command", "command": "~/.claude/statusline.sh", "padding": 0 }'
   fi

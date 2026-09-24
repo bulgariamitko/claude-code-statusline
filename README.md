@@ -6,20 +6,17 @@ A feature-rich status line for [Claude Code](https://docs.anthropic.com/en/docs/
 
 ## Features
 
-- **Per-message token tracking** - Input/output tokens for the last message, with cache read/write breakdown
+- **Reasoning effort** - Live effort level (`low` / `medium` / `high` / `xhigh` / `max`), color-coded, updates on `/effort`
 - **Real-time rate limit tracking** - Session (5h) and weekly (7d) usage percentages with progress bars and countdown timers
 - **Color-coded usage warnings** - Green/yellow/red based on usage level
+- **Token tracking** - Cached tokens for the last request and total tokens in context
 - **Git integration** - Branch name, clean/dirty status, ahead/behind counts
-- **Project detection** - Auto-detects project name from git root
-- **Language detection** - Identifies primary language from file extensions
 - **Session duration** - How long the current session has been running
 - **Model & version display** - Shows active model and Claude Code version
-- **Context window tracking** - Monitors token usage vs context limit
-- **Cost tracking** - Session cost and burn rate ($/hour)
-- **Task counter** - Shows active task count
 - **Auto-update notifications** - Checks for new versions daily and shows upgrade prompt
-- **Performance optimized** - Caching to keep the status line fast
-- **No dependencies required** - Works with pure bash; optionally uses `jq` for better JSON parsing
+- **Fast on every platform** - Parses JSON and formats output with bash builtins, calls git once per 30s, so it stays fast even on Windows (Git Bash), where starting a process is slow
+- **Cross-platform** - macOS, Linux and Windows (Git Bash)
+- **No dependencies required** - Works with pure bash; uses `jq` when available
 
 ## Installation
 
@@ -93,22 +90,19 @@ SL v3.0.0
 
 ### Line 1 - Core info
 ```
-📁 project-name  🐚 bash  🤖 Claude Opus 4.6 (1M context)  📟 v2.1.84  SL v3.0.0
+📁 project-name  🤖 Opus 5.5 (1M context)  🧠 high  📟 v2.1.260  SL v3.3.0
 ```
+
+`🧠` shows the current reasoning effort. It is hidden when the model doesn't support effort.
 
 ### Line 2 - Rate limits (appears after first API response)
 ```
-⚡ Session: 42% [===---]  ⏱2h 1m   📈 Weekly: 70% [=====-] ⏱38h 1m
+⚡ Session: 42% [==----] ⏱2h 1m  📈 Weekly: 70% [====--] ⏱1d 14h 1m
 ```
 
-### Line 3 - Per-message token usage
+### Line 3 - Tokens, git, session duration
 ```
-📨 Last msg: 8.5k in / 1.2k out (9.8k total) [cache: 52.0k read, 3.2k write]
-```
-
-### Line 4 - Git, language, session duration
-```
-🐍 Python  🌿 main ✅  ⏱️ 1h 23m
+📦 Cached: 52.0k  📊 Total: 61.3k  🌿 main ✅  ⏱️ 1h 23m
 ```
 
 ## Rate Limit Data
@@ -128,6 +122,12 @@ This data is provided automatically by Claude Code after the first API response 
 | 50-74% | Yellow |
 | >= 75% | Red |
 
+## Windows
+
+Claude Code runs status line commands through **Git Bash** on Windows (it ships with [Git for Windows](https://gitforwindows.org/)). Run the quick install command from a Git Bash window. The default `"command": "~/.claude/statusline.sh"` works as is. If you write a full path, use forward slashes (`C:/Users/you/.claude/statusline.sh`), because Git Bash treats backslashes as escape characters.
+
+Emoji render correctly in Windows Terminal. The legacy console (`conhost`) may show boxes instead.
+
 ## Optional: jq
 
 The script works without `jq` using bash-based JSON parsing, but `jq` provides more reliable extraction. Install it for best results:
@@ -141,22 +141,29 @@ sudo apt-get install jq
 
 # Fedora
 sudo dnf install jq
+
+# Arch
+sudo pacman -S jq
+
+# Windows
+winget install jqlang.jq
 ```
 
 ## Customization
 
 The script is a single bash file - feel free to modify colors, layout, or add/remove sections. Key areas:
 
-- **Colors**: Lines 28-37 define the color palette using ANSI 256-color codes
-- **Progress bar**: `progress_bar()` function controls the bar width and characters
-- **Cache TTL**: `CACHE_TTL=30` controls how often git/language detection refreshes (seconds)
-- **Sections**: Comment out any `printf` block in the render section to hide it
+- **Colors**: the `c NAME '38;5;N'` block defines the palette using ANSI 256-color codes (set `NO_COLOR=1` to disable colors)
+- **Effort colors**: the `case "$effort_level"` block
+- **Progress bar**: `progress_bar()` controls the bar characters
+- **Cache TTL**: `CACHE_TTL=30` controls how often git info refreshes (seconds)
+- **Sections**: each line is built in the render section at the bottom; remove the part you don't want
 
 ## Requirements
 
 - Claude Code CLI (with statusline support)
-- bash 3.2+ (ships with macOS and most Linux distros)
-- git (for git integration features)
+- bash 3.2+ (ships with macOS, Linux distros and Git for Windows)
+- git 2.15+ (for git integration features)
 - Optional: `jq` (for better JSON parsing)
 
 ## License
